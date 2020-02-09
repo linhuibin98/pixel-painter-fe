@@ -1,26 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react'
+import './App.css'
+import io from 'socket.io-client'
+import PixelGrid from './components/PixelGrid'
+import ColorSelect from './components/ColorSelect'
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  state = {
+    colorData: [],
+    currentColor: 'red'
+  }
+
+  componentDidMount() {
+    this.socket = io.connect('http://localhost:9966')
+
+    this.socket.on('get color data', colorData => {
+      this.setState({
+        colorData
+      })
+    })
+  }
+
+  // 修改单前选择颜色
+  setCurrentColor = color => {
+    console.log(color)
+    this.setState({
+      currentColor: color
+    })
+  }
+
+  // 更新颜色组grid
+  handleGridColor = (row, col) => {
+    if (this.state.colorData[row][col] === this.state.currentColor) return
+    this.socket.emit('update grid color', {
+      row,
+      col,
+      color: this.state.currentColor
+    })
+  }
+
+  render() {
+    return (
+      <div className="App">
+        <PixelGrid
+          colorData={this.state.colorData}
+          handleGridColor={this.handleGridColor}
+        />
+        <ColorSelect setCurrentColor={this.setCurrentColor} />
+      </div>
+    )
+  }
 }
 
-export default App;
+export default App
